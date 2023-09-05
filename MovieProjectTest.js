@@ -11,7 +11,7 @@ const searchClicked = async (domElement) => {
         domElement.style.display = 'block';
     }
     const movies = await getMovieList();
-    console.log(movies);
+    // console.log(movies);
 
     clearResults();
     displayInputValue(domElement, movies);
@@ -28,7 +28,7 @@ function displayInputValue(domElement, movies) {
     // console.log(movieTitle);
 
     // const inputValue = document.getElementById("title").value;
-    movies.forEach( movie =>  {
+    movies.results.forEach( movie =>  {
         const movieTitle = movie.title;
         createMovieElement(movieTitle);
     });
@@ -39,19 +39,45 @@ async function getMovieList () {
     const movieEndpoint = '/search/movie';
     const userInput = document.getElementById("title").value;
     //console.log(userInput);
+    let pageNumber = 1;
 
-    const filterTerms = `?api_key=${apiKey}&query=${userInput}`;
-    const urlToFetch = tmdbBaseUrl + movieEndpoint + filterTerms;
+    let filterTerms = `?api_key=${apiKey}&query=${userInput}&page${pageNumber}`;
+    let urlToFetch = tmdbBaseUrl + movieEndpoint + filterTerms;
+
+    let movieResult = new Object();
 
     try {
         const response = await fetch(urlToFetch);
         if (response.ok) {
             const jsonResponse = await response.json();
-            let totalPages = jsonResponse.total_pages;
-            console.log(totalPages);
+            const totalPages = jsonResponse.total_pages;
+
+            movieResult.totalPages = jsonResponse.total_pages;
+            movieResult.results = jsonResponse.results;
+            movieResult.totalResults = jsonResponse.total_results;
+
+            while( pageNumber < totalPages ) {
+                pageNumber++;
+                let filterTerms = `?api_key=${apiKey}&query=${userInput}&page${pageNumber}`;
+                let urlToFetch = tmdbBaseUrl + movieEndpoint + filterTerms;
+                try {
+                    const responseTwo = await fetch(urlToFetch);
+                    if (responseTwo.ok) {
+                        const jsonResponseTwo = await responseTwo.json();
+                        movieResult.results = movieResult.results.concat(jsonResponseTwo.results);
+                    }
+                } catch (error) {
+                    console.log(error);
+                }
+                // console.log(pageNumber);
+                // console.log(movieResult.results);
+            }
+
             const movies = jsonResponse.results;
-            console.log(movies);
-            return movies;
+            // console.log(movies);
+            // console.log(movieResult);
+            // console.log(movieResult.results);
+            return movieResult;
         }
     } catch (error) {
         console.log(error);
