@@ -1,6 +1,7 @@
 /** API connection information */
 const apiKey = 'fcdc9b92007d6d0e09f0c4a8cbc71395';
 const tmdbBaseUrl = 'https://api.themoviedb.org/3';
+const basePosterPath = 'https://image.tmdb.org/t/p/original';
 
 /** A document element for the search button */
 const buttonElement = document.getElementById('searchButton');
@@ -22,9 +23,9 @@ const searchClicked = async (domElement) => {
 
     // Gets the search results and clears any previously displayed results
     const movies = await getMovieList();
-    clearResults();
 
-    displayInputValue(domElement, movies);
+    clearResults();
+    displayInputValue(movies);
 
 };
 
@@ -36,15 +37,24 @@ buttonElement.addEventListener('click', () => {
 });
 
 /**
+ * Sets a listener for if the enter button is pressed in the search box
+ */
+document.getElementById("title").addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') {
+        searchClicked(resultsElement);
+    }
+});
+
+/**
  * Responsible for working through the search results array
  * @param domElement the results element.  currently not used
  * @param movies an object containing the search results
  */
-function displayInputValue(domElement, movies) {
+function displayInputValue(movies) {
 
     movies.results.forEach( movie =>  {
-        const movieTitle = movie.title;
-        createMovieElement(movieTitle);
+        
+        createMovieElement(movie);
     });
 }
 
@@ -97,6 +107,7 @@ async function getMovieList () {
                 }
 
             }
+            console.log(movieResult);
             return movieResult;
         }
     } catch (error) {
@@ -105,15 +116,57 @@ async function getMovieList () {
 
 }
 
-function createMovieElement(title) {
+function createMovieElement(movie) {
+    // Create the results element
     let newMovieElement = document.createElement('div');
-    let movieParagraph = document.createElement('h2');
-    newMovieElement.setAttribute('id', 'result');
-    movieParagraph.innerHTML = title;
-    newMovieElement.appendChild(movieParagraph);
+    // newMovieElement.style.backgroundColor = 'DodgerBlue';
+    newMovieElement.setAttribute('class', 'movieResult');
+    // newMovieElement.style.height = '150px';
+    // newMovieElement.setAttribute('id', 'result');
+    // newMovieElement.style.display = 'block';
+
+    // Create the title element
+    let movieTitle = document.createElement('h3');
+    movieTitle.innerHTML = movie.title;
+    movieTitle.setAttribute('class', 'movieTitle');
+    // let desc = document.createElement('p');
+    // movieParagraph.setAttribute('align', 'left'); // changed align
+    // movieParagraph.style.padding = '5px';
+    // movieParagraph.style.paddingLeft = '50px';
+
+    // Create the poster element
+    let poster = document.createElement('img');
+    poster.setAttribute('class', 'poster');
+    movie.poster_path !== null ? poster.setAttribute('src', basePosterPath + movie.poster_path) : poster.setAttribute('src', './no_image_found.jpg');
+    // poster.setAttribute('height', '100');
+    // poster.setAttribute('src', basePosterPath + movie.poster_path);
+    // poster.setAttribute('align', 'left');
+
+    // Create the description element
+    let desc = document.createElement('p');
+    desc.innerHTML = movie.overview;
+    desc.setAttribute('class', 'desc');
+
+    // Create the release date element
+    let release = document.createElement('p');
+    release.innerHTML = 'Released: ' + movie.release_date;
+    release.setAttribute('class', 'releaseDate');
+
+
+    // newMovieElement.appendChild(poster);
+    // Add created values
+    newMovieElement.appendChild(release);
+    newMovieElement.insertBefore(desc, release);
+    newMovieElement.insertBefore(movieTitle, desc);
+    newMovieElement.insertBefore(poster, movieTitle);
     resultsElement.appendChild(newMovieElement);
 }
 
+/**
+ * Used to clear the previous search results
+ * 
+ * NOTE - this will run at n time. try to find an option with a better runtime
+ */
 function clearResults() {
     let firstChild = resultsElement.firstElementChild;
     while (firstChild) {
